@@ -1,0 +1,7 @@
+#ifndef _PARS_FCN_H_
+#define _PARS_FCN_H_
+
+double pars_fcn(double sampletime, double simlength, double init);
+//void calc(double sampletime, double simlength, string expression_string, double* res);
+
+#endif

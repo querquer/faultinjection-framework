@@ -1,0 +1,162 @@
+#include <matrix.h>
+#include <mex.h>   
+#include <iostream>
+#include <cstdio>
+#include <string>
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+#include "rapidxml.hpp"
+#include "exprtk.hpp"
+
+#define S_FUNCTION_NAME  your_sfunction_name_here
+#define S_FUNCTION_LEVEL 2
+#include "simstruc.h"
+
+/* Definitions to keep compatibility with earlier versions of ML */
+#ifndef MWSIZE_MAX
+typedef int mwSize;
+typedef int mwIndex;
+typedef int mwSignedIndex;
+
+#if (defined(_LP64) || defined(_WIN64)) && !defined(MX_COMPAT_32)
+/* Currently 2^48 based on hardware limitations */
+# define MWSIZE_MAX    281474976710655UL
+# define MWINDEX_MAX   281474976710655UL
+# define MWSINDEX_MAX  281474976710655L
+# define MWSINDEX_MIN -281474976710655L
+#else
+# define MWSIZE_MAX    2147483647UL
+# define MWINDEX_MAX   2147483647UL
+# define MWSINDEX_MAX  2147483647L
+# define MWSINDEX_MIN -2147483647L
+#endif
+#define MWSIZE_MIN    0UL
+#define MWINDEX_MIN   0UL
+#endif
+
+using namespace rapidxml;
+using namespace std;
+
+
+static void mdlInitializeSizes(SimStruct *S)
+{
+
+}
+
+
+
+void calc(double sampletime, double simlength, std::string expression_string, double* res)
+{   
+    double x = double(0);
+    
+    
+	exprtk::symbol_table<double> symbol_table;
+	symbol_table.add_variable("x",x);
+
+	exprtk::expression<double> expression;
+	expression.register_symbol_table(symbol_table);
+
+	exprtk::parser<double> parser;
+	parser.compile(expression_string,expression);
+	
+    int delta = static_cast<int>(1/sampletime);
+    
+	for ( x = 0; x <= simlength; x += sampletime)
+	{
+		int temp = (1/sampletime)*x;
+		res[temp] = expression.value();
+	}
+}
+
+
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    //declare variables
+    mxArray *a_out_m, *b_out_m, *st_in_m, *sl_in_m, *data_output, *time_input[3], *time_output[1], *timeseries_input[2], *timeseries_output[1];
+    double *a, *b, *st, *sl, sampletime, simlength;
+    int dimx, countFault;
+
+    
+    // get inputs
+    st_in_m = mxDuplicateArray(prhs[0]);
+    sl_in_m = mxDuplicateArray(prhs[1]);
+    st = mxGetPr(st_in_m);        
+    sl = mxGetPr(sl_in_m);
+
+
+	// init var
+    sampletime = st[0];
+    simlength = sl[0];
+	dimx = (1/sampletime)*simlength;
+    countFault = 0;
+
+
+	// create time vector
+	time_input[0] = mxCreateDoubleScalar(sampletime);
+	time_input[1] = mxCreateDoubleScalar(simlength);
+	time_input[2] = mxCreateDoubleScalar(dimx);
+
+	mexCallMATLAB(1, time_output, 3, time_input, "linspace");
+
+
+    // start parsing
+
+	xml_document<> doc;
+	xml_node<> * root_node;
+	ifstream theFile ("faultKonf_03.xml");
+
+	vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
+	buffer.push_back('\0');
+	doc.parse<0>(&buffer[0]);
+	root_node = doc.first_node("injection");
+	string attr = "correlation";
+
+	for (xml_node<> * fault_node = root_node->first_node("fault"); fault_node; fault_node = fault_node->next_sibling())
+	{
+	    for(xml_node<> * child_node = fault_node->first_node(); child_node; child_node = child_node->next_sibling())
+	    {
+			if(attr.compare(child_node->name()) == 0)
+			{
+				plhs[countFault] = mxCreateDoubleMatrix(dimx,1,mxREAL);
+				data_output = mxCreateDoubleMatrix(dimx,1,mxREAL);
+
+				// calculate data_vec
+				double *res = mxGetPr(data_output);
+                calc(sampletime, simlength, child_node->value(), res);
+
+				
+				// create  tiemseries and add to output array
+				timeseries_input[0] = data_output;
+				timeseries_input[1] = time_output[0];
+				mexCallMATLAB(1, timeseries_output, 2, timeseries_input, "timeseries");
+				plhs[countFault] = timeseries_output[0];
+
+				
+
+                ++countFault;
+			}
+	    }
+	}
+    
+	//msDestroyArray()
+	
+
+    return;
+}
+
+
+static void mdlTerminate(SimStruct *S)
+{
+
+}
+
+#ifdef MATLAB_MEX_FILE    /* Is this file being compiled as a 
+                             MEX-file? */
+#include "simulink.c"     /* MEX-file interface mechanism */
+#else
+#include "cg_sfun.h"      /* Code generation registration 
+                             function */
+#endif

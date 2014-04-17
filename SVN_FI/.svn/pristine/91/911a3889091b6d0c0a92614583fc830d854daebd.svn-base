@@ -1,0 +1,6 @@
+#include "doubleIt.h"
+
+double doubleIt(double inVal)
+{
+	return(2 * inVal);
+}

@@ -1,0 +1,122 @@
+#include <matrix.h>
+#include <mex.h>   
+#include <iostream>
+#include <cstdio>
+#include <string>
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+
+/* Definitions to keep compatibility with earlier versions of ML */
+#ifndef MWSIZE_MAX
+typedef int mwSize;
+typedef int mwIndex;
+typedef int mwSignedIndex;
+
+#if (defined(_LP64) || defined(_WIN64)) && !defined(MX_COMPAT_32)
+/* Currently 2^48 based on hardware limitations */
+# define MWSIZE_MAX    281474976710655UL
+# define MWINDEX_MAX   281474976710655UL
+# define MWSINDEX_MAX  281474976710655L
+# define MWSINDEX_MIN -281474976710655L
+#else
+# define MWSIZE_MAX    2147483647UL
+# define MWINDEX_MAX   2147483647UL
+# define MWSINDEX_MAX  2147483647L
+# define MWSINDEX_MIN -2147483647L
+#endif
+#define MWSIZE_MIN    0UL
+#define MWINDEX_MIN   0UL
+#endif
+
+
+using namespace std;
+
+
+void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
+{
+	mxArray *time_input[3], *time_output[1], *t_out, *data_input[2], *data_output[1], *timeseries_input[2], *timeseries_output[1];
+	double *ptr_time_output, *ptr_in, *ptr_plhs, *time_vec, *ptr_data_output, *ptr_timeseries_output;
+
+	// create time vector 
+	time_input[0] = mxCreateDoubleScalar(0.01);
+	time_input[1] = mxCreateDoubleScalar(10);
+	time_input[2] = mxCreateDoubleScalar(1000);
+
+	mexCallMATLAB(1, time_output, 3, time_input, "linspace");
+	ptr_time_output = mxGetPr(time_output[0]);
+
+	mexPrintf("time_output \n");
+	for(int i = 0; i <1000; ++i)
+		mexPrintf("%g\t",ptr_time_output[i]);
+	mexPrintf("\n");
+
+
+	// create data vec
+	data_input[0] = mxCreateDoubleScalar(1000);
+	data_input[1] = mxCreateDoubleScalar(1);
+
+	mexCallMATLAB(1, data_output, 2, data_input, "ones");
+	ptr_data_output = mxGetPr(data_output[0]);
+
+	mexPrintf("data_output \n");
+	for(int i = 0; i <1000; ++i)
+		mexPrintf("%g\t",ptr_data_output[i]);
+	mexPrintf("\n");
+
+
+	// create timeseries
+	timeseries_input[0] = data_output[0];
+	timeseries_input[1] = time_output[0];
+	mexCallMATLAB(1, timeseries_output, 2, timeseries_input, "timeseries");
+	//ptr_timeseries_output = mxGetPr(timeseries_output[0]);
+
+	mexCallMATLAB(0, NULL, 1, timeseries_output, "plot");
+
+	// mexFunc output
+	t_out = plhs[0] = mxCreateDoubleMatrix(1,1,mxREAL);
+	time_vec = mxGetPr(t_out);
+	//time_vec = ptr_out;
+
+
+	
+
+
+
+	return;
+}
+//
+//void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
+//{
+//	mxArray *lhs[1], *m_out;
+//	double *a, *m;
+//
+//	m_out = plhs[0] = mxCreateDoubleMatrix(1,1,mxREAL);
+//
+//	mexCallMATLAB(1, lhs, 0, NULL, "rand");
+//
+//	a = mxGetPr(lhs[0]);
+//	m = mxGetPr(m_out);
+//	
+//	m[0] = 4.2;
+//
+//
+//	mexPrintf("output: %g\t%g\n", a[0], m[0]);
+//
+//}
+
+//	mxArray *lhs, *m_out;
+//	double *a, m;
+//
+//	lhs[0] = mxCreateDoubleMatrix(2,1,mxREAL);
+//	//m_out = plhs[0] = mxCreateDoubleMatrix(1,1,mxREAL);
+//
+//	mexCallMATLAB(1, lhs, 0, NULL, "rand");
+//
+//	a = mxGetPr(lhs[0]);
+//	//m = mxGetPr(m_out);
+//
+//	mexPrintf("output: %g\n", a[0]);
+//}

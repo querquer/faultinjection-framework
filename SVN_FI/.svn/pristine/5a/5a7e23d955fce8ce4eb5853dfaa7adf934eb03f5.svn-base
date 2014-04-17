@@ -1,0 +1,20 @@
+% file to initialise and start simulation nr.07
+% init
+clear all; clc;
+
+cd('C:/Users/Maik/SkyDrive/Simulink/SVN_FI');
+SimLength = 10;
+SampleTime = 0.01;
+GlobalSeed = 10;
+load('data/RPM_01')
+load('data/MotorCurrent_01')
+open('SensorFaultInj_07.slx')
+
+% start
+% rng('shuffle'); % reset random number generator
+% sim('SensorFaultInj_07')
+
+% change rng algo
+% s = RandStream('swb2712', 'seed', 5)
+% RandStream.setGlobalStream(s);
+% rand

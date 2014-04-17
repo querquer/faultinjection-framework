@@ -1,0 +1,6 @@
+#ifndef _PARS_DISTR_H_
+#define _PARS_DISTR_H_
+
+double pars_distr(double fault_id, double sampletime, double simlength, double init);
+
+#endif

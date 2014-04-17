@@ -1,0 +1,117 @@
+
+//
+//void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+//{
+//    //declare variables
+//    mxArray *a_out_m, *b_out_m, *st_in_m, *sl_in_m;
+//    double *a, *b, *st, *sl, sampletime, simlength;
+//    int dimx, dimy, countFault;
+//
+//    dimx = 1000;
+//	dimy = 2;
+//    countFault = 0;
+//    
+//
+//    // associate outputs
+//    st_in_m = mxDuplicateArray(prhs[0]);
+//    sl_in_m = mxDuplicateArray(prhs[1]);
+//    st = mxGetPr(st_in_m);        
+//    sl = mxGetPr(sl_in_m);
+//    sampletime = st[0];
+//    simlength = sl[0];
+//    mexPrintf("SampleTime: %g\tSimLength: %g\n", sampletime, simlength);
+//    
+//
+//	// init output array
+//    double** res = new double*[dimy];
+//
+//	for( int i=0; i<dimy; ++i )
+//		res[i] = new double[dimx];
+//    
+// //   for(int i = 0; i < 2; ++i)
+//	//{
+//	//	for(int j = 0; j < dim; ++j)
+//	//		res[i][j] = j;
+//	//}
+//     
+//
+//    //associate outputs
+//    a_out_m = plhs[0] = mxCreateDoubleMatrix(dimx,1,mxREAL);
+//    b_out_m = plhs[1] = mxCreateDoubleMatrix(dimx,1,mxREAL);
+//    
+//    res[0] = mxGetPr(a_out_m);
+//    res[1] = mxGetPr(b_out_m);
+//      
+//
+//    // start parsing
+//    cout << "Parsing fault-list..." << endl;
+//	xml_document<> doc;
+//	xml_node<> * root_node;
+//	ifstream theFile ("faultKonf_03.xml");
+//
+//	vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
+//	buffer.push_back('\0');
+//	doc.parse<0>(&buffer[0]);
+//	root_node = doc.first_node("injection");
+//	string attr = "correlation";
+//
+//	for (xml_node<> * fault_node = root_node->first_node("fault"); fault_node; fault_node = fault_node->next_sibling())
+//	{
+//	    for(xml_node<> * child_node = fault_node->first_node(); child_node; child_node = child_node->next_sibling())
+//	    {
+//			if(attr.compare(child_node->name()) == 0)
+//			{
+//				
+//				mexPrintf("%s\t[%s]\n",child_node->name(), child_node->value());
+//                calc(sampletime, simlength, child_node->value(), res[countFault]);
+//                ++countFault;
+//			}
+//			else
+//				mexPrintf("%s\t[%s]", child_node->name(), child_node->value());
+//				
+//			cout << endl;
+//	    }
+//	    cout << "----------" << endl;
+//	}
+//
+// //   for( int i=0; i<dimy; ++i )
+//	//	delete[] res[i];
+//
+//	//delete[] res;
+//    
+//    return;
+//}
+
+
+//void exprCall(int start, double sampletime, double simlength, std::string expression_string, double* res)
+//{
+//    double x = double(start);
+//    double end = x+1.0;
+//    
+//	exprtk::symbol_table<double> symbol_table;
+//	symbol_table.add_variable("x",x);
+//
+//	exprtk::expression<double> expression;
+//	expression.register_symbol_table(symbol_table);
+//
+//	exprtk::parser<double> parser;
+//	parser.compile(expression_string,expression);
+//	
+//    int delta = static_cast<int>(1/sampletime);
+//    
+//	for (; x <= end; x += sampletime)
+//	{
+//		int temp = (1/sampletime)*x;
+//		res[temp] = expression.value();
+//		mexPrintf("%g\t%g\tres[%i]\n",x, expression.value(), temp);
+//	}
+//}
+//
+//void divide(double sampletime, double simlength, std::string expression_string, double* res)
+//{
+//    for(int i = 0; i < simlength; ++i)
+//    {
+//        mexPrintf("start call from %i", i);
+//        exprCall(i, sampletime, simlength, expression_string, res);
+//    }
+//}

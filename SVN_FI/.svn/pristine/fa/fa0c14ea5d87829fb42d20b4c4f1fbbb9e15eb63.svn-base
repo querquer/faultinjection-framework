@@ -1,0 +1,145 @@
+#include <matrix.h>
+#include <mex.h>   
+#include <iostream>
+#include <cstdio>
+#include <string>
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+#include "pars_fcn.hpp"
+#include "rapidxml.hpp"
+#include "exprtk.hpp"
+
+using namespace rapidxml;
+using namespace std;
+
+//void calc(double sampletime, double simlength, std::string expression_string, double* res)
+//{   
+//	//printf("start calc_fcn(%g,%g)\n", sampletime, simlength);
+//    double x = double(0);
+//    
+//    
+//	exprtk::symbol_table<double> symbol_table;
+//	symbol_table.add_variable("x",x);
+//
+//	exprtk::expression<double> expression;
+//	expression.register_symbol_table(symbol_table);
+//
+//	exprtk::parser<double> parser;
+//	parser.compile(expression_string,expression);
+//	
+//    int delta = static_cast<int>(1/sampletime);
+//    
+//	for ( x = 0; x <= simlength; x += sampletime)
+//	{
+//		int temp = (1/sampletime)*x;
+//		res[temp] = expression.value();
+//		printf("%g | res[%i] = %g\n",x, temp, res[temp]);
+//	}
+//}
+//
+//void true_fcn(double simlength, double sampletime)
+//{
+//	double dimy = simlength/sampletime;
+//	const int dimx = 2;
+//
+//	double** res = new double*[dimy];
+//
+//	for( int i=0; i<dimy; ++i )
+//		res[i] = new double[dimx];
+//
+//
+//	// start parsing
+//	printf("start parsing...\n");
+//	xml_document<> doc;
+//	xml_node<> * root_node;
+//	ifstream theFile ("faultKonf_03.xml");
+//
+//	vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
+//	buffer.push_back('\0');
+//	doc.parse<0>(&buffer[0]);
+//	root_node = doc.first_node("injection");
+//	string attr = "correlation";
+//
+//	int countFault = 0;
+//	for (xml_node<> * fault_node = root_node->first_node("fault"); fault_node; fault_node = fault_node->next_sibling())
+//	{
+//	     for(xml_node<> * child_node = fault_node->first_node(); child_node; child_node = child_node->next_sibling())
+//	    {
+//			if(attr.compare(child_node->name()) == 0)
+//			{
+//				printf("%s\t[%s]\n",child_node->name(), child_node->value());
+//                calc(sampletime, simlength, child_node->value(), res[countFault]);
+//                ++countFault;
+//			}
+//			else
+//				printf("%s\t[%s]", child_node->name(), child_node->value());
+//				
+//			cout << endl;
+//	    }
+//	    cout << "----------" << endl;
+//	}
+//
+//}
+
+void calc(double sampletime, double simlength, std::string expression_string, double* res, double init)
+{   
+    double x = double(init);
+    
+    
+	exprtk::symbol_table<double> symbol_table;
+	symbol_table.add_variable("x",x);
+
+	exprtk::expression<double> expression;
+	expression.register_symbol_table(symbol_table);
+
+	exprtk::parser<double> parser;
+	parser.compile(expression_string,expression);
+	
+    int delta = static_cast<int>(1/sampletime);
+    
+
+
+	*res = expression.value();
+	printf("fcn(%g) = \t%g\n",x, expression.value());
+	
+}
+
+double pars_fcn(double sampletime, double simlength, double init)
+{
+	//printf("start parsFcn(%g, %g, %g)\n", sampletime, simlength, init);
+	double value = 0;
+	double* res = &value;
+
+	// start parsing
+	xml_document<> doc;
+	xml_node<> * root_node;
+	ifstream theFile ("faultKonf_03.xml");
+
+	vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
+	buffer.push_back('\0');
+	doc.parse<0>(&buffer[0]);
+	root_node = doc.first_node("injection");
+
+	string attr = "correlation";
+	string fault_str = "time correlated offset";
+	string label_str = "label";
+	for (xml_node<> * fault_node = root_node->first_node("fault"); fault_node; fault_node = fault_node->next_sibling())
+	{
+	    for(xml_node<> * child_node = fault_node->first_node(); child_node; child_node = child_node->next_sibling())
+	    {
+			if(label_str.compare(child_node->name()) == 0)
+				if(fault_str.compare(child_node->value()) != 0)
+					break;
+			
+			if(attr.compare(child_node->name()) == 0)
+			{
+                calc(sampletime, simlength, child_node->value(), res, init);
+			}
+	    }
+	}
+
+	return value;
+}

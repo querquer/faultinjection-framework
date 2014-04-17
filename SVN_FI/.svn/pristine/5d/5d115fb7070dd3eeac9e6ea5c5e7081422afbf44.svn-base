@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<injection>
+    <campaign>
+		<label>default</label>
+		<id>0</id>
+		<file>XML/faultKonf_04.xml</file>
+		<description> default fault schedule </description>
+    </campaign>
+	<campaign>
+		<label>test01</label>
+		<id>1</id>
+		<file>XML/faultKonf_05.xml</file>
+		<description> test 01</description>
+    </campaign>
+	<campaign>
+		<label>test01</label>
+		<id>2</id>
+		<file>XML/faultKonf_06.xml</file>
+		<description> tco, ncn, sat</description>
+    </campaign>
+	<campaign>
+		<label>test01</label>
+		<id>3</id>
+		<file>XML/faultKonf_07.xml</file>
+		<description> tcd, vco, out</description>
+    </campaign>
+	<campaign>
+		<label>MotorCurrent</label>
+		<id>4</id>
+		<file>XML/MC_confFile.xml</file>
+		<description> -- </description>
+    </campaign>
+	<campaign>
+		<label>RPM</label>
+		<id>5</id>
+		<file>XML/RPM_confFile.xml</file>
+		<description> -- </description>
+    </campaign>
+</injection>

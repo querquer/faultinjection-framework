@@ -1,0 +1,19 @@
+% mxArray *lhs, *rhs;
+
+timevec = linspace(0, simlength, anzahl sample);
+timevec = linspace(0, 10, 1000);
+data_corr = timeseries(data, time);
+
+% create time vector
+% steps = simlength*sampletime;
+% x = linspace(0,10,steps);
+rhs[0] = 0;
+rhs[1] = simlength-sampletime;
+rhs[2] = steps;
+mexCallMATLAB(1 ,&lhs, 3, &rhs, "linspace");
+
+% -----------------------------------------------
+rhs[0] = time vec;
+rhs[1] = value vec;
+
+mexCallMATLAB(1 ,&lhs, 2, &rhs, "timeseries");

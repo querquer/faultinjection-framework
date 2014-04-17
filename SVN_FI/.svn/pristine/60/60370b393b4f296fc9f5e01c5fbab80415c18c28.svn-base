@@ -1,0 +1,141 @@
+% Dies ist ein Programm zur Simulation eines inversen Pendels auf 2
+% Raedern. Hier sind Konstanten und Modellgleichungen zusammen gefasst.
+% Eine Arbeit von Andre Pieper.
+
+%% Bereinigung
+
+clear all; clc;
+%% Parameter
+
+g = 9.80665;                      % Erdbeschleunigung in [m/(s*s)]
+l = 0.5;                          % Laenge des Pendels in [m]
+
+SimLength = 80;
+SampleTime = 0.01;
+GlobalSeed = 10;
+
+%% Sollvorgaben
+
+phi_soll = 0;                     % Ruhelage
+phi_punkt_soll = 0; 
+
+phi_break = 1.6894;               % Winkelauslenkung, in der das Pendel
+                                  % auf der Unterlage aufliegt. (=97 Grad)
+%% Anfangsbedingungen 
+
+x0=[0;0];                         % Anfangsschaetzung Phi=0 , Phi_Punkt=0
+P0=[0 0;0 0];                     % Schaetzwert der Kovarianzmatrix t=0
+
+Phi0=[0;0];                       % Anfangsauslenkung des Pendels
+%5*(2*pi/360);                    % Beispiel fuer 5 Grad Auslenkung
+
+phi0beo(1)=Phi0(1)-phi_soll;
+phi0beo(2)=0 ;
+
+Verstaerkung = 0.0;               % Impulsstaerke der Stoerung
+Verzoegerung_Phi = 0.03;           % zeitliche Verzoegerung der Messwerte
+Verzoegerung_x = 0.09; 
+Verzoegerung = 0.01;
+
+%% Zustandsraumdarstellung Pendel          
+A = [0 1                          % Systemmatrix (linearisiertes Modell)
+    g/l 0];   
+B = [0 1/l]';                     % Eingangsvektor
+C = [1 0];                        % Ausgangsmatrix
+                         
+D = [];                           % Durchgangsmatrix (nicht sprungfaehig)
+
+%% Zustandsraumdarstellung Robo          
+Ar = [0 1                         % Systemmatrix (linearisiertes Modell)
+    0 0];   
+Br = [0 1]';                      % Eingangsvektor
+
+%% Nachweis Steuerbarkeit und Beobachtbarkeit
+
+pendel_system = ss(A,B,C,D);
+rank_control = rank(ctrb(pendel_system));
+rank_observ = rank(obsv(pendel_system));
+
+if rank_control == 2
+    disp('Das System ist steuerbar')
+else
+    disp('Das System ist nicht steuerbar')
+end
+
+if rank_observ == 2
+    disp('Das System ist beobachtbar')
+    disp(' ')
+else
+    disp('Das System ist nicht beobachtbar')
+    disp(' ')
+end
+
+%% Untersuchung auf Stabilitaet
+disp('Die Systemmatrix besitzt folgende Eigenwerte: ')
+
+lambda=eig(A)
+
+if isreal(lambda) && max(lambda) ~= 0 
+    
+    if max(lambda) < 0
+        disp('Das System ist somit stabil!');
+    else
+        disp('Das System ist somit instabil!');
+    end
+    
+else
+    
+    disp('Fuer dieses System laesst sich daraus kein Schluss ziehen, sondern es')
+    disp('muss mithilfe der Ljapunov-Funktion naeher untersucht werden.')
+    disp(' ')
+    disp('Es ergibt sich nach Ljapunov: ')
+    
+    posdef=0;
+    
+    while posdef ~= 2
+        
+        posdef = 0;
+        Q = rand(2) + eye(2);
+        
+        for i = 1:2
+            determ = det(Q(1:i, 1:i));
+            if determ > 0
+                posdef = posdef + 1;
+            end
+        end
+    end
+    
+    try
+        X=lyap(A,Q);
+        disp('Das System ist stabil!')
+    catch
+        disp('Das System ist nicht stabil!')
+    end
+    
+end
+
+%% Zustandsrueckfuehrung
+
+% K_Pendel = place(A, B, [-5 -6]');     % Gewicht der Zustandsrueckf�hrung
+% K_Robo = place(Ar, Br, [-1 -0.5]');               
+
+%% LQR-Regler
+
+Q_Pendel = 0.0001 * eye(length(A));     % Gewichtungsmatrizen Q und R
+R_Pendel = 0.0001 * eye(1);             % weil nur 1 Stellgroesse
+
+Q_Robo = 0.0001 * eye(length(A));         
+R_Robo = 0.001 * eye(1);                
+
+
+[K_Pendel] = lqr(A,B,Q_Pendel,R_Pendel);     % Reglerentwurf (e.. sind hier die EW)
+[K_Robo] = lqr(Ar,Br,Q_Robo,R_Robo);
+
+%% Lueneberger Beobachter
+% p = [-1 -2];
+% p = 10 * ep;                         % Pole des Beobachters
+
+% L = place(A',C',p)';                 % L-Matrix
+L = lqr(A',C', Q_Pendel, R_Pendel)';   % L-Matrix 
+
+Hilf = (A - L * C);                    % Hilfsmatrix

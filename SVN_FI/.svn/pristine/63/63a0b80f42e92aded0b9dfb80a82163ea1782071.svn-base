@@ -1,0 +1,7 @@
+% file to initialise and start simulation nr.06
+load('data/RPM_01')
+load('data/MotorCurrent_01')
+SimLength = 10;
+SampleTime = 0.01;
+open('SensorFaultInj_06.slx')
+sim('SensorFaultInj_06')

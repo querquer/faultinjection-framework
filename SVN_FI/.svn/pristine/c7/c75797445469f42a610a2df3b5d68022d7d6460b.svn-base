@@ -1,0 +1,5 @@
+cd('C:/Users/Maik/SkyDrive/Simulink/SVN_FI'); 
+SimLength = 10;
+SampleTime = 0.01;
+open('SensorFaultInj_05.slx')
+sim('SensorFaultInj_05')

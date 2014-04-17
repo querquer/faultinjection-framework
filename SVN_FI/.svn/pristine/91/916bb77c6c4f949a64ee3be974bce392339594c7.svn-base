@@ -1,0 +1,6 @@
+#ifndef _DOUBLEIT_H_
+#define _DOUBLEIT_H_
+
+double doubleIt(double inVal);
+
+#endif
